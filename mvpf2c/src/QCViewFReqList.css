@@ -90,6 +90,19 @@
   .qcdetailsviewbutton:hover {
     background-color: #075fe4;
   }
+
+  .disabled {
+    background-color: #ccc; /* Change to the color you prefer for a disabled button */
+    color: #666; /* Change to the text color you prefer for a disabled button */
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  .disabled:hover {
+    background-color: #ccc; /* Ensure that the hover color remains the same as the normal state */
+    color: #666; /* Ensure that the text color remains the same as the normal state */
+    cursor: not-allowed;
+    box-shadow: none;
+  }
   
 /* 
   .allocreqbutton{

@@ -19,6 +19,9 @@ function CCviewQCFreeLoc() {
   const accessToken = Cookies.get('accessToken');
     const navigate = useNavigate();
   const { requestId } = useParams();
+
+  const [disabledButtons, setDisabledButtons] = useState(new Set());
+  
   useEffect(() => {
     // Fetch the list of quality checkers from the backend
     const fetchQualityCheckers = async () => {
@@ -64,7 +67,16 @@ function CCviewQCFreeLoc() {
     });
   };
 
-  const handleAssignQC = (qcId) => {
+  const handleAssignQC = (qcId, qcAvailable) => {
+    if (!qcId) {
+      return;
+    }
+  
+    if (qcAvailable === 'busy') {
+      // Check the status and prevent assignment if "busy"
+      alert('The Quality Checker is currently busy and cannot be assigned.');
+      return;
+    }
     axios
   .post(`/api/QCAdmin/assign-qc-to-farmer/${requestId}/${qcId}`, null, {
    // .post(`/api/roleccqc/assign-qc-to-farmer/${qcId}`, {
@@ -73,21 +85,35 @@ function CCviewQCFreeLoc() {
     },
     })
      .then((response) => {
-     // Check if the assignment was successful
-   if (response.status === 200) {
-     // Navigate to CCassignQCtoF with a success message as state
-//  navigate('/CCassignQCtoF', { state: { success: true } });
-    alert('Assigned successfully!');   } 
-   else {
-    // Handle other status codes or show an error message
-     console.error('Error:', response.data);
-     }
+      if (response.status === 200) {
+        // Update the status locally
+        const updatedQualityCheckers = qualityCheckers.map((qc) => {
+          if (qc.id === qcId) {
+            return {
+              ...qc,
+              qcAvailable: 'busy',
+            };
+          }
+          return qc;
+        });
+        setQualityCheckers(updatedQualityCheckers);
+
+        alert('Assigned successfully!');
+      } else {
+        console.error('Error:', response.data);
+      }
     })
      .catch((error) => {
      console.error('Error:', error);
     // Handle any error or show a failure message
+
+     // Re-enable the button on error
+     disabledButtons.delete(qcId);
+     setDisabledButtons(new Set(disabledButtons));
     });
     };
+ 
+  
 
   return (
     <div className="qc-dashboard">
@@ -166,7 +192,10 @@ function CCviewQCFreeLoc() {
                 <td>{qc.qcAvailable}</td>
                 {/* Add more fields as needed */}
                 <td>
-<button className="button-barccviewqcfreeloc" onClick={() => handleAssignQC(qc.id)}>Assign</button>
+                <button
+                          className={`button-barccviewqcfreeloc ${qc.qcAvailable === 'busy' ? 'disabled' : ''}`}
+                          onClick={() => handleAssignQC(qc.id, qc.qcAvailable)}
+                        >Assign</button>
 </td>
               </tr>
             ))}

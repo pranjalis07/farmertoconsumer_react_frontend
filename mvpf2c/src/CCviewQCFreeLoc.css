@@ -149,4 +149,9 @@ thead.ccviewqcreqlistthead th{
   .table-container tr:hover {
     background-color: #C8E6C9; /* Hover color, slightly darker green */
   }
-  
+  .button-barccviewqcfreeloc.disabled {
+    background-color: #ccc; /* Change to the color you prefer for a disabled button */
+    color: #666; /* Change to the text color you prefer for a disabled button */
+    cursor: not-allowed;
+    box-shadow: none;
+  }

@@ -5,12 +5,15 @@ import Cookies from 'js-cookie';
 import './QCViewFReqList.css';
 import animationJSON from "./success2.json";
 import { motion } from "framer-motion";
+import Swal from 'sweetalert2'
 //use parth qc login for this demo 
 function QCViewFReqList() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const accessToken = Cookies.get('accessToken');
+
+  const [disabledButtons, setDisabledButtons] = useState(new Set());
   //const navigate = useNavigate();
   const initialVariants = {
     opacity: 0,
@@ -30,6 +33,9 @@ function QCViewFReqList() {
   const [isVisible, setIsVisible] = useState(false);
 
 
+  
+// CommonJS
+const Swal = require('sweetalert2');
   useEffect(() => {
     const qcId = localStorage.getItem('userId'); // Replace with your key
     
@@ -52,6 +58,14 @@ function QCViewFReqList() {
   }, []); // The empty dependency array ensures this effect runs once on component mount.
   
   const handleApprove = (requestId) => {
+    if (!requestId || disabledButtons.has(requestId)) {
+      return;
+    }
+
+    // Disable the button
+    disabledButtons.add(requestId);
+    setDisabledButtons(new Set(disabledButtons));
+    localStorage.setItem(`buttonState_${requestId}`, 'disabled');
     axios
       .post(`/api/QCAdmin/approve/${requestId}`, null, {
         headers: {
@@ -66,13 +80,36 @@ function QCViewFReqList() {
           // You can also display an alert here
           // alert('You have approved the farmer request successfully.');
         }
+        // Swal.fire({
+        //   position: 'top-end',
+        //   icon: 'success',
+        //   title: 'Your work has been saved',
+        //   showConfirmButton: false,
+        //   timer: 1500
+        // })
       })
       .catch((error) => {
         // Handle errors here
         console.error('Error approving request:', error);
+
+         // Re-enable the button on error
+         disabledButtons.delete(requestId);
+         setDisabledButtons(new Set(disabledButtons));
+         localStorage.removeItem(`buttonState_${requestId}`);
       });
   };
+  useEffect(() => {
+    // On page load, check localStorage and apply the .disabled class
+    requests.forEach((request) => {
+      const requestId = request.reqForQCCC;
+      const buttonElement = document.querySelector(`button[data-request-id="${requestId}"]`);
+      const buttonState = localStorage.getItem(`buttonState_${requestId}`);
 
+      if (buttonState === 'disabled') {
+        buttonElement.classList.add('disabled');
+      }
+    });
+  }, [requests]);
 
   return (
     <div className="qc-dashboard">
@@ -136,7 +173,15 @@ function QCViewFReqList() {
                 <Link to={`/QCViewFReqSingle/${request.reqForQCCC}`}><button className='qcdetailsviewbutton' >View</button></Link>
               </td>
               <td>
-              <button onClick={() => handleApprove(request.reqForQCCC)} className="qcdetailsviewbutton">Approve</button>
+              <button
+                          data-request-id={request.reqForQCCC}
+                          onClick={() => handleApprove(request.reqForQCCC)}
+                          className={`qcdetailsviewbutton ${
+                            disabledButtons.has(request.reqForQCCC) ? 'disabled' : ''
+                          }`}
+                        >
+                          Approve
+                        </button>
               </td>
               {/* <button onClick={handleApprove} className="approve-button">Approve</button> */}
  
